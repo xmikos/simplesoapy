@@ -25,7 +25,7 @@ class SoapyDevice:
     default_buffer_size = 8192
 
     def __init__(self, soapy_args='', sample_rate=0, bandwidth=0, corr=0, gain=0, auto_gain=False,
-                 antenna='', channel=0, force_sample_rate=False, force_bandwidth=False):
+                 channel=0, antenna='', force_sample_rate=False, force_bandwidth=False):
         self.device = SoapySDR.Device(soapy_args)
         self.buffer = None
         self.buffer_size = None
