@@ -5,7 +5,7 @@ import sys, math, logging
 import SoapySDR
 import numpy
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 logger = logging.getLogger(__name__)
 
 
@@ -29,6 +29,7 @@ class SoapyDevice:
         self.device = SoapySDR.Device(soapy_args)
         self.buffer = None
         self.buffer_size = None
+        self.buffer_overflow_count = 0
         self.stream_args = None
 
         self._hardware = self.device.getHardwareKey()
@@ -46,6 +47,8 @@ class SoapyDevice:
         self.force_sample_rate = force_sample_rate
         self.force_bandwidth = force_bandwidth
 
+        self._fix_hardware_quirks()
+
         if sample_rate:
             self.sample_rate = sample_rate
         if bandwidth:
@@ -59,8 +62,6 @@ class SoapyDevice:
         if antenna:
             self.antenna = antenna
 
-        self._fix_hardware_quirks()
-
     def _fix_hardware_quirks(self):
         """Apply some settings to fix quirks of specific hardware"""
         if self.hardware == 'RTLSDR':
@@ -73,6 +74,11 @@ class SoapyDevice:
             logger.debug('Applying fixes for SDRPlay quirks...')
             # Don't use base buffer size returned by getStreamMTU(), it's too big
             self.buffer_size = self.default_buffer_size
+        elif self.hardware == 'LimeSDR-USB':
+            logger.debug('Applying fixes for LimeSDR-USB quirks...')
+            # LimeSDR driver doesn't provide list of allowed sample rates and bandwidths
+            self.force_sample_rate = True
+            self.force_bandwidth = True
 
     @property
     def hardware(self):
@@ -257,12 +263,13 @@ class SoapyDevice:
             try:
                 buffer_size = self.device.getStreamMTU(self._stream)
             except AttributeError:
-                logger.warning('getStreamMTU() not implemented! Using default value: {}'.format(
+                logger.warning('getStreamMTU not implemented! Using default value: {}'.format(
                     self.default_buffer_size
                 ))
                 buffer_size = self.default_buffer_size
 
         self.buffer = numpy.empty(buffer_size, numpy.complex64)
+        self.buffer_overflow_count = 0
         self._stream_timeout = 0.1 + (buffer_size / self.sample_rate)
         logger.debug('SoapySDR stream - buffer size: {}'.format(buffer_size))
         logger.debug('SoapySDR stream - read timeout: {:.6f}'.format(self._stream_timeout))
@@ -291,7 +298,7 @@ class SoapyDevice:
         else:
             res = self.device.readStream(self._stream, [self.buffer], buffer_size)
         if res.ret > 0 and res.ret < buffer_size:
-            logger.warning('readStream() returned only {} samples, but buffer size is {}!'.format(
+            logger.warning('readStream returned only {} samples, but buffer size is {}!'.format(
                 res.ret, buffer_size
             ))
         return res
@@ -306,7 +313,8 @@ class SoapyDevice:
                 output_buffer[ptr:ptr + res.ret] = self.buffer[:min(res.ret, output_buffer_size - ptr)]
                 ptr += res.ret
             elif res.ret == -4:
-                logger.warning('Buffer overflow error in readStream()!')
+                self.buffer_overflow_count += 1
+                logger.debug('Buffer overflow error in readStream ({:d})!'.format(self.buffer_overflow_count))
                 logger.debug('Value of ptr when overflow happened: {}'.format(ptr))
             else:
                 raise RuntimeError('Unhandled readStream() error: {} ({})'.format(
@@ -330,4 +338,4 @@ if __name__ == '__main__':
 
     logger.info('Detected SoapySDR devices:')
     for i, d in enumerate(devices):
-        logger.info('  {} ... driver={}, label={}'.format(i + 1, d['driver'], d['label']))
+        logger.info('  device_id={}, driver={}, label={}'.format(i, d['driver'], d['label']))
