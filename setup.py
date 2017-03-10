@@ -16,7 +16,7 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "Intended Audience :: Telecommunications Industry"
+        "Intended Audience :: Telecommunications Industry",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
