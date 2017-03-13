@@ -7,6 +7,7 @@ Requirements
 ------------
 
 - Python 3
+- NumPy (http://www.numpy.org)
 - SoapySDR (https://github.com/pothosware/SoapySDR)
 
 Example

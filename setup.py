@@ -12,6 +12,9 @@ setup(
     url="https://github.com/xmikos/simplesoapy",
     license="MIT",
     py_modules=["simplesoapy"],
+    install_requires=[
+        'numpy',
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
