@@ -7,7 +7,7 @@ pkgdesc="Simple pythonic wrapper for SoapySDR library"
 arch=('any')
 url="https://github.com/xmikos/simplesoapy"
 license=('MIT')
-depends=('python')
+depends=('python' 'python-numpy')
 makedepends=('python-setuptools')
 source=(https://github.com/xmikos/simplesoapy/archive/v$pkgver.tar.gz)
 
