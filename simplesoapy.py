@@ -52,6 +52,7 @@ class SoapyDevice:
         self.stream_args = None
 
         self._hardware = self.device.getHardwareKey()
+        self._channel = None
         self._stream = None
         self._stream_timeout = None
         self._freq = None
@@ -110,6 +111,20 @@ class SoapyDevice:
         return bool(self._stream)
 
     @property
+    def channel(self):
+        """RX channel number"""
+        return self._channel
+
+    @channel.setter
+    def channel(self, channel):
+        """Set RX channel number"""
+        if channel in self.list_channels():
+            self._channel = channel
+        else:
+            logger.warning('Incorrect RX channel number, using channel 0 instead!')
+            self._channel = 0
+
+    @property
     def freq(self):
         """Center frequency [Hz]"""
         return self._freq
@@ -117,14 +132,14 @@ class SoapyDevice:
     @freq.setter
     def freq(self, freq):
         """Set center frequency [Hz]"""
-        freq_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self.channel, 'RF')[0]
+        freq_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')[0]
         if freq < freq_range.minimum() or freq > freq_range.maximum():
             raise ValueError('Center frequency out of range ({}, {})!'.format(
                 freq_range.minimum(), freq_range.maximum()
             ))
 
         self._freq = freq
-        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self.channel, 'RF', freq)
+        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF', freq)
 
     @property
     def sample_rate(self):
@@ -144,7 +159,7 @@ class SoapyDevice:
                 ))
 
         self._sample_rate = real_sample_rate
-        self.device.setSampleRate(SoapySDR.SOAPY_SDR_RX, self.channel, real_sample_rate)
+        self.device.setSampleRate(SoapySDR.SOAPY_SDR_RX, self._channel, real_sample_rate)
 
     @property
     def bandwidth(self):
@@ -169,7 +184,7 @@ class SoapyDevice:
                 ))
 
         self._bandwidth = real_bandwidth
-        self.device.setBandwidth(SoapySDR.SOAPY_SDR_RX, self.channel, real_bandwidth)
+        self.device.setBandwidth(SoapySDR.SOAPY_SDR_RX, self._channel, real_bandwidth)
 
     @property
     def gain(self):
@@ -179,14 +194,14 @@ class SoapyDevice:
     @gain.setter
     def gain(self, gain):
         """Set gain [dB]"""
-        gain_range = self.device.getGainRange(SoapySDR.SOAPY_SDR_RX, self.channel)
+        gain_range = self.device.getGainRange(SoapySDR.SOAPY_SDR_RX, self._channel)
         if gain < gain_range.minimum() or gain > gain_range.maximum():
             raise ValueError('Gain out of range ({}, {})!'.format(
                 gain_range.minimum(), gain_range.maximum()
             ))
 
         self._gain = gain
-        self.device.setGain(SoapySDR.SOAPY_SDR_RX, self.channel, gain)
+        self.device.setGain(SoapySDR.SOAPY_SDR_RX, self._channel, gain)
 
     @property
     def auto_gain(self):
@@ -196,12 +211,12 @@ class SoapyDevice:
     @auto_gain.setter
     def auto_gain(self, auto_gain):
         """Set Automatic Gain Control"""
-        if not self.device.hasGainMode(SoapySDR.SOAPY_SDR_RX, self.channel):
+        if not self.device.hasGainMode(SoapySDR.SOAPY_SDR_RX, self._channel):
             logger.warning('Device does not support Automatic Gain Control!')
             return
 
         self._auto_gain = auto_gain
-        self.device.setGainMode(SoapySDR.SOAPY_SDR_RX, self.channel, auto_gain)
+        self.device.setGainMode(SoapySDR.SOAPY_SDR_RX, self._channel, auto_gain)
 
     @property
     def antenna(self):
@@ -221,7 +236,7 @@ class SoapyDevice:
             return
 
         self._antenna = antenna
-        self.device.setAntenna(SoapySDR.SOAPY_SDR_RX, self.channel, antenna)
+        self.device.setAntenna(SoapySDR.SOAPY_SDR_RX, self._channel, antenna)
 
     @property
     def corr(self):
@@ -235,34 +250,38 @@ class SoapyDevice:
             logger.warning('Device does not support frequency correction!')
             return
 
-        corr_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self.channel, 'CORR')[0]
+        corr_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'CORR')[0]
         if corr < corr_range.minimum() or corr > corr_range.maximum():
             raise ValueError('Frequency correction out of range ({}, {})!'.format(
                 corr_range.minimum(), corr_range.maximum()
             ))
 
         self._corr = corr
-        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self.channel, 'CORR', corr)
+        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'CORR', corr)
+
+    def list_channels(self):
+        """List available RX channels"""
+        return list(range(self.device.getNumChannels(SoapySDR.SOAPY_SDR_RX)))
 
     def list_sample_rates(self):
         """List allowed sample rates"""
-        return self.device.listSampleRates(SoapySDR.SOAPY_SDR_RX, self.channel)
+        return self.device.listSampleRates(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     def list_bandwidths(self):
         """List allowed bandwidths"""
-        return self.device.listBandwidths(SoapySDR.SOAPY_SDR_RX, self.channel)
+        return self.device.listBandwidths(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     def list_antennas(self):
         """List available antennas"""
-        return self.device.listAntennas(SoapySDR.SOAPY_SDR_RX, self.channel)
+        return self.device.listAntennas(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     def list_gains(self):
         """List available amplification elements"""
-        return self.device.listGains(SoapySDR.SOAPY_SDR_RX, self.channel)
+        return self.device.listGains(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     def list_frequencies(self):
         """List available tunable elements"""
-        return self.device.listFrequencies(SoapySDR.SOAPY_SDR_RX, self.channel)
+        return self.device.listFrequencies(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     def start_stream(self, buffer_size=0, stream_args=None):
         """Start streaming samples"""
@@ -271,10 +290,10 @@ class SoapyDevice:
 
         if stream_args or self.stream_args:
             logger.debug('SoapySDR stream - args: {}'.format(stream_args or self.stream_args))
-            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self.channel],
+            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel],
                                                    stream_args or self.stream_args)
         else:
-            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self.channel])
+            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel])
         self.device.activateStream(self._stream)
 
         buffer_size = buffer_size or self.buffer_size
