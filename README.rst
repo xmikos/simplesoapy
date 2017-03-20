@@ -6,9 +6,14 @@ Simple pythonic wrapper for SoapySDR library
 Requirements
 ------------
 
-- Python 3
-- NumPy (http://www.numpy.org)
-- SoapySDR (https://github.com/pothosware/SoapySDR)
+- `Python 3 <https://www.python.org>`_
+- `NumPy <http://www.numpy.org>`_
+- `SoapySDR <https://github.com/pothosware/SoapySDR>`_
+
+Limitations
+-----------
+
+Only receiving is implemented. Transmission may be implemented in future.
 
 Example
 -------
@@ -18,7 +23,7 @@ Example
     import numpy
     
     # List all connected SoapySDR devices
-    print(simplesoapy.detect_devices())
+    print(simplesoapy.detect_devices(as_string=True))
     
     # Initialize SDR device
     sdr = simplesoapy.SoapyDevice('driver=rtlsdr')

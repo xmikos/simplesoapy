@@ -25,6 +25,7 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Scientific/Engineering",
         "Topic :: Communications :: Ham Radio"
     ]
 )
