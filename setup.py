@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="SimpleSoapy",
-    version="1.1.0",
+    version="1.2.0",
     description="Simple pythonic wrapper for SoapySDR library",
     long_description=open('README.rst').read(),
     author="Michal Krenek (Mikos)",
