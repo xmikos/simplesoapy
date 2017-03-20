@@ -14,10 +14,29 @@ def closest(num_list, num):
     return min(num_list, key=lambda x: abs(x - num))
 
 
-def detect_devices():
+def detect_devices(soapy_args='', as_string=False):
     """Detect connected SoapySDR devices"""
-    devices = SoapySDR.Device.enumerate()
-    return [{'driver': d['driver'], 'label': d['label']} for d in devices]
+    devices = [dict(d) for d in SoapySDR.Device.enumerate(soapy_args)]
+
+    if not as_string:
+        return devices
+    else:
+        devices_str = []
+        for d in devices:
+            d_str = []
+            d_str.append('driver={}'.format(d['driver']))
+            if d['driver'] == 'remote':
+                d_str.append('remote:driver={}'.format(d['remote:driver']))
+                d_str.append('remote={}'.format(d['remote']))
+            if 'serial' in d:
+                d_str.append('serial={}'.format(d['serial']))
+            if 'device_id' in d:
+                d_str.append('device_id={}'.format(d['device_id']))
+            if 'rtl' in d:
+                d_str.append('rtl={}'.format(d['rtl']))
+            d_str.append('label={}'.format(d['label']))
+            devices_str.append(', '.join(d_str))
+        return devices_str
 
 
 class SoapyDevice:
@@ -331,11 +350,11 @@ if __name__ == '__main__':
         format='%(levelname)s: %(message)s'
     )
 
-    devices = detect_devices()
+    devices = detect_devices(as_string=True)
     if not devices:
         logger.error('No SoapySDR devices detected!')
         sys.exit(1)
 
     logger.info('Detected SoapySDR devices:')
     for i, d in enumerate(devices):
-        logger.info('  device_id={}, driver={}, label={}'.format(i, d['driver'], d['label']))
+        logger.info('  {}'.format(d))
