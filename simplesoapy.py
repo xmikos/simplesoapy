@@ -274,7 +274,7 @@ class SoapyDevice:
             self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self.channel],
                                                    stream_args or self.stream_args)
         else:
-            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32)
+            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self.channel])
         self.device.activateStream(self._stream)
 
         buffer_size = buffer_size or self.buffer_size
