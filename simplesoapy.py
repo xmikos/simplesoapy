@@ -298,6 +298,18 @@ class SoapyDevice:
             raise ValueError('Unknown amplification element!')
         self.device.setGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name, value)
 
+    def get_frequency(self, tunable_name):
+        """Get frequency of given tunable element"""
+        if tunable_name not in self.list_frequencies():
+            raise ValueError('Unknown tunable element!')
+        return self.device.getFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name)
+
+    def set_frequency(self, tunable_name, value):
+        """Set frequency of given tunable element"""
+        if tunable_name not in self.list_frequencies():
+            raise ValueError('Unknown tunable element!')
+        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name, value)
+
     def start_stream(self, buffer_size=0, stream_args=None):
         """Start streaming samples"""
         if self.is_streaming:
