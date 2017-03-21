@@ -283,6 +283,18 @@ class SoapyDevice:
         """List available tunable elements"""
         return self.device.listFrequencies(SoapySDR.SOAPY_SDR_RX, self._channel)
 
+    def get_gain(self, amp_name):
+        """Get gain of given amplification element"""
+        if amp_name not in self.list_gains():
+            raise ValueError('Unknown aplification element!')
+        return self.device.getGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name)
+
+    def set_gain(self, amp_name, value):
+        """Set gain of given amplification element"""
+        if amp_name not in self.list_gains():
+            raise ValueError('Unknown aplification element!')
+        self.device.setGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name, value)
+
     def start_stream(self, buffer_size=0, stream_args=None):
         """Start streaming samples"""
         if self.is_streaming:
