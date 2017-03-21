@@ -49,12 +49,12 @@ class SoapyDevice:
         self.buffer = None
         self.buffer_size = None
         self.buffer_overflow_count = 0
+        self.stream = None
         self.stream_args = None
+        self.stream_timeout = None
 
         self._hardware = self.device.getHardwareKey()
         self._channel = None
-        self._stream = None
-        self._stream_timeout = None
         self._freq = None
         self._sample_rate = None
         self._bandwidth = None
@@ -108,7 +108,7 @@ class SoapyDevice:
     @property
     def is_streaming(self):
         """Has been start_stream() already called? (read-only)"""
-        return bool(self._stream)
+        return bool(self.stream)
 
     @property
     def channel(self):
@@ -305,16 +305,16 @@ class SoapyDevice:
 
         if stream_args or self.stream_args:
             logger.debug('SoapySDR stream - args: {}'.format(stream_args or self.stream_args))
-            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel],
-                                                   stream_args or self.stream_args)
+            self.stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel],
+                                                  stream_args or self.stream_args)
         else:
-            self._stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel])
-        self.device.activateStream(self._stream)
+            self.stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel])
+        self.device.activateStream(self.stream)
 
         buffer_size = buffer_size or self.buffer_size
         if not buffer_size:
             try:
-                buffer_size = self.device.getStreamMTU(self._stream)
+                buffer_size = self.device.getStreamMTU(self.stream)
             except AttributeError:
                 logger.warning('getStreamMTU not implemented! Using default value: {}'.format(
                     self.default_buffer_size
@@ -323,9 +323,9 @@ class SoapyDevice:
 
         self.buffer = numpy.empty(buffer_size, numpy.complex64)
         self.buffer_overflow_count = 0
-        self._stream_timeout = 0.1 + (buffer_size / self.sample_rate)
+        self.stream_timeout = 0.1 + (buffer_size / self.sample_rate)
         logger.debug('SoapySDR stream - buffer size: {}'.format(buffer_size))
-        logger.debug('SoapySDR stream - read timeout: {:.6f}'.format(self._stream_timeout))
+        logger.debug('SoapySDR stream - read timeout: {:.6f}'.format(self.stream_timeout))
 
         return self.buffer
 
@@ -334,9 +334,9 @@ class SoapyDevice:
         if not self.is_streaming:
             raise RuntimeError('Streaming is not initialized, you must run start_stream() first!')
 
-        self.device.deactivateStream(self._stream)
-        self.device.closeStream(self._stream)
-        self._stream = None
+        self.device.deactivateStream(self.stream)
+        self.device.closeStream(self.stream)
+        self.stream = None
         self.buffer = None
 
     def read_stream(self, stream_timeout=0):
@@ -345,11 +345,11 @@ class SoapyDevice:
             raise RuntimeError('Streaming is not initialized, you must run start_stream() first!')
 
         buffer_size = len(self.buffer)
-        if stream_timeout or self._stream_timeout:
-            res = self.device.readStream(self._stream, [self.buffer], buffer_size,
-                                         timeoutUs=math.ceil((stream_timeout or self._stream_timeout) * 1e6))
+        if stream_timeout or self.stream_timeout:
+            res = self.device.readStream(self.stream, [self.buffer], buffer_size,
+                                         timeoutUs=math.ceil((stream_timeout or self.stream_timeout) * 1e6))
         else:
-            res = self.device.readStream(self._stream, [self.buffer], buffer_size)
+            res = self.device.readStream(self.stream, [self.buffer], buffer_size)
         if res.ret > 0 and res.ret < buffer_size:
             logger.warning('readStream returned only {} samples, but buffer size is {}!'.format(
                 res.ret, buffer_size
