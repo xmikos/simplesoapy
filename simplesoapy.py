@@ -44,7 +44,7 @@ class SoapyDevice:
     default_buffer_size = 8192
 
     def __init__(self, soapy_args='', sample_rate=0, bandwidth=0, corr=0, gain=0, auto_gain=False,
-                 channel=0, antenna='', force_sample_rate=False, force_bandwidth=False):
+                 channel=0, antenna='', settings=None, force_sample_rate=False, force_bandwidth=False):
         self.device = SoapySDR.Device(soapy_args)
         self.buffer = None
         self.buffer_size = None
@@ -89,6 +89,10 @@ class SoapyDevice:
 
         if antenna:
             self.antenna = antenna
+
+        if settings:
+            for setting_name, value in settings.items():
+                self.set_setting(setting_name, value)
 
     def _fix_hardware_quirks(self):
         """Apply some settings to fix quirks of specific hardware"""
@@ -294,6 +298,14 @@ class SoapyDevice:
         """List available tunable elements"""
         return self.device.listFrequencies(SoapySDR.SOAPY_SDR_RX, self._channel)
 
+    def list_settings(self):
+        """List available device settings, their default values and description"""
+        settings = {
+            s.key: {'value': s.value, 'name': s.name, 'description': s.description}
+            for s in self.device.getSettingInfo()
+        }
+        return settings
+
     def get_gain(self, amp_name):
         """Get gain of given amplification element"""
         if amp_name not in self.list_gains():
@@ -317,6 +329,18 @@ class SoapyDevice:
         if tunable_name not in self.list_frequencies():
             raise ValueError('Unknown tunable element!')
         self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name, value)
+
+    def get_setting(self, setting_name):
+        """Get value of given device setting"""
+        if setting_name not in self.list_settings():
+            raise ValueError('Unknown device setting!')
+        return self.device.readSetting(setting_name)
+
+    def set_setting(self, setting_name, value):
+        """Set value of given device setting"""
+        if setting_name not in self.list_settings():
+            raise ValueError('Unknown device setting!')
+        self.device.writeSetting(setting_name, value)
 
     def start_stream(self, buffer_size=0, stream_args=None):
         """Start streaming samples"""
