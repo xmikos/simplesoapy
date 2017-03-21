@@ -127,7 +127,7 @@ class SoapyDevice:
     @property
     def freq(self):
         """Center frequency [Hz]"""
-        return self._freq
+        return self.device.getFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')
 
     @freq.setter
     def freq(self, freq):
@@ -144,7 +144,7 @@ class SoapyDevice:
     @property
     def sample_rate(self):
         """Sample rate [Hz]"""
-        return self._sample_rate
+        return self.device.getSampleRate(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
@@ -164,7 +164,7 @@ class SoapyDevice:
     @property
     def bandwidth(self):
         """Filter bandwidth [Hz]"""
-        return self._bandwidth
+        return self.device.getBandwidth(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @bandwidth.setter
     def bandwidth(self, bandwidth):
@@ -189,7 +189,7 @@ class SoapyDevice:
     @property
     def gain(self):
         """Gain [dB]"""
-        return self._gain
+        return self.device.getGain(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @gain.setter
     def gain(self, gain):
@@ -206,7 +206,7 @@ class SoapyDevice:
     @property
     def auto_gain(self):
         """Automatic Gain Control"""
-        return self._auto_gain
+        return self.device.getGainMode(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @auto_gain.setter
     def auto_gain(self, auto_gain):
@@ -221,7 +221,7 @@ class SoapyDevice:
     @property
     def antenna(self):
         """Selected antenna"""
-        return self._antenna
+        return self.device.getAntenna(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @antenna.setter
     def antenna(self, antenna):
@@ -241,7 +241,10 @@ class SoapyDevice:
     @property
     def corr(self):
         """Frequency correction [ppm]"""
-        return self._corr
+        try:
+            return self.device.getFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'CORR')
+        except RuntimeError:
+            return 0
 
     @corr.setter
     def corr(self, corr):
@@ -286,13 +289,13 @@ class SoapyDevice:
     def get_gain(self, amp_name):
         """Get gain of given amplification element"""
         if amp_name not in self.list_gains():
-            raise ValueError('Unknown aplification element!')
+            raise ValueError('Unknown amplification element!')
         return self.device.getGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name)
 
     def set_gain(self, amp_name, value):
         """Set gain of given amplification element"""
         if amp_name not in self.list_gains():
-            raise ValueError('Unknown aplification element!')
+            raise ValueError('Unknown amplification element!')
         self.device.setGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name, value)
 
     def start_stream(self, buffer_size=0, stream_args=None):
