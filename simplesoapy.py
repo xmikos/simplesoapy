@@ -71,14 +71,22 @@ class SoapyDevice:
 
         if sample_rate:
             self.sample_rate = sample_rate
+
         if bandwidth:
             self.bandwidth = bandwidth
+
         if corr:
             self.corr = corr
-        if gain:
+
+        if gain and isinstance(gain, dict):
+            for amp_name, value in gain.items():
+                self.set_gain(amp_name, value)
+        elif gain:
             self.gain = gain
+
         if auto_gain:
             self.auto_gain = auto_gain
+
         if antenna:
             self.antenna = antenna
 
