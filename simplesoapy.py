@@ -96,17 +96,7 @@ class SoapyDevice:
 
     def _fix_hardware_quirks(self):
         """Apply some settings to fix quirks of specific hardware"""
-        if self.hardware == 'RTLSDR':
-            logger.debug('Applying fixes for RTLSDR quirks...')
-            # Fix buffer overflows when reading too much samples too quickly
-            # (maybe using bigger buffer, set up dynamicaly based on number of samples, would be better?)
-            if not self.stream_args:
-                self.stream_args = {'buffers': '100'}  # default is 15 buffers
-        elif self.hardware == 'SDRPlay':
-            logger.debug('Applying fixes for SDRPlay quirks...')
-            # Don't use base buffer size returned by getStreamMTU(), it's too big
-            self.buffer_size = self.default_buffer_size
-        elif self.hardware == 'LimeSDR-USB':
+        if self.hardware == 'LimeSDR-USB':
             logger.debug('Applying fixes for LimeSDR-USB quirks...')
             # LimeSDR driver doesn't provide list of allowed sample rates and bandwidths
             self.force_sample_rate = True
