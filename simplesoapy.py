@@ -162,10 +162,10 @@ class SoapyDevice:
     @freq.setter
     def freq(self, freq):
         """Set center frequency [Hz]"""
-        freq_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')[0]
-        if freq < freq_range.minimum() or freq > freq_range.maximum():
+        freq_range = self.get_frequency_range()
+        if freq < freq_range[0] or freq > freq_range[1]:
             raise ValueError('Center frequency out of range ({}, {})!'.format(
-                freq_range.minimum(), freq_range.maximum()
+                freq_range[0], freq_range[1]
             ))
 
         self._freq = freq
@@ -224,10 +224,10 @@ class SoapyDevice:
     @gain.setter
     def gain(self, gain):
         """Set gain [dB]"""
-        gain_range = self.device.getGainRange(SoapySDR.SOAPY_SDR_RX, self._channel)
-        if gain < gain_range.minimum() or gain > gain_range.maximum():
+        gain_range = self.get_gain_range()
+        if gain < gain_range[0] or gain > gain_range[1]:
             raise ValueError('Gain out of range ({}, {})!'.format(
-                gain_range.minimum(), gain_range.maximum()
+                gain_range[0], gain_range[1]
             ))
 
         self._gain = gain
@@ -283,10 +283,10 @@ class SoapyDevice:
             logger.warning('Device does not support frequency correction!')
             return
 
-        corr_range = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'CORR')[0]
-        if corr < corr_range.minimum() or corr > corr_range.maximum():
+        corr_range = self.get_frequency_range('CORR')
+        if corr < corr_range[0] or corr > corr_range[1]:
             raise ValueError('Frequency correction out of range ({}, {})!'.format(
-                corr_range.minimum(), corr_range.maximum()
+                corr_range[0], corr_range[1]
             ))
 
         self._corr = corr
@@ -352,6 +352,16 @@ class SoapyDevice:
             raise ValueError('Unknown amplification element!')
         self.device.setGain(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name, value)
 
+    def get_gain_range(self, amp_name=None):
+        """Get allowed range of total gain or gain of given amplification element"""
+        if amp_name:
+            if amp_name not in self.list_gains():
+                raise ValueError('Unknown amplification element!')
+            gain = self.device.getGainRange(SoapySDR.SOAPY_SDR_RX, self._channel, amp_name)
+        else:
+            gain = self.device.getGainRange(SoapySDR.SOAPY_SDR_RX, self._channel)
+        return (gain.minimum(), gain.maximum())
+
     def get_frequency(self, tunable_name):
         """Get frequency of given tunable element"""
         if tunable_name not in self.list_frequencies():
@@ -363,6 +373,16 @@ class SoapyDevice:
         if tunable_name not in self.list_frequencies():
             raise ValueError('Unknown tunable element!')
         self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name, value)
+
+    def get_frequency_range(self, tunable_name=None):
+        """Get allowed range of center frequency or frequency of given tunable element"""
+        if tunable_name:
+            if tunable_name not in self.list_frequencies():
+                raise ValueError('Unknown tunable element!')
+            freq = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name)[0]
+        else:
+            freq = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')[0]
+        return (freq.minimum(), freq.maximum())
 
     def get_setting(self, setting_name):
         """Get value of given device setting"""
