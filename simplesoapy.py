@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, math, logging
+import sys, math, logging, collections, itertools
 
 import SoapySDR
 import numpy
@@ -37,6 +37,34 @@ def detect_devices(soapy_args='', as_string=False):
             d_str.append('label={}'.format(d['label']))
             devices_str.append(', '.join(d_str))
         return devices_str
+
+
+class Ranges(collections.abc.Sequence):
+    """List of (minimum, maximum) tuples specifying ranges"""
+    def __init__(self, list_of_tuples):
+        self._ranges = list(list_of_tuples)
+
+    def closest(self, num):
+        """Return number closest to supplied number from available ranges"""
+        if num in self:
+            return num
+        else:
+            edges = itertools.chain.from_iterable(self)
+            return closest(edges, num)
+
+    def __contains__(self, num):
+        for r in self._ranges:
+            if num >= r[0] and num <= r[1]:
+                return True
+
+    def __getitem__(self, key):
+        return self._ranges[key]
+
+    def __len__(self):
+        return len(self._ranges)
+
+    def __repr__(self):
+        return 'Ranges({})'.format(repr(self._ranges))
 
 
 class SoapyDevice:
@@ -175,12 +203,12 @@ class SoapyDevice:
         if self.force_bandwidth:
             real_bandwidth = bandwidth
         else:
-            bandwidths = self.list_bandwidths()
-            if not bandwidths:
+            band_ranges = self.list_bandwidths()
+            if not band_ranges:
                 logger.warning('Device does not support setting filter bandwidth!')
                 return
 
-            real_bandwidth = closest(bandwidths, bandwidth)
+            real_bandwidth = band_ranges.closest(bandwidth)
             if bandwidth != real_bandwidth:
                 logger.warning('Filter bandwidth {} Hz is not supported, setting it to {} Hz!'.format(
                     bandwidth, real_bandwidth
@@ -275,7 +303,15 @@ class SoapyDevice:
 
     def list_bandwidths(self):
         """List allowed bandwidths"""
-        return self.device.listBandwidths(SoapySDR.SOAPY_SDR_RX, self._channel)
+        band_ranges = Ranges(
+            (f.minimum(), f.maximum())
+            for f in self.device.getBandwidthRange(SoapySDR.SOAPY_SDR_RX, self._channel)
+        )
+        if band_ranges:
+            return band_ranges
+        else:
+            band_list = self.device.listBandwidths(SoapySDR.SOAPY_SDR_RX, self._channel)
+            return Ranges((f, f) for f in band_list)
 
     def list_antennas(self):
         """List available antennas"""
