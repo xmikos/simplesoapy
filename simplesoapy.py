@@ -127,9 +127,8 @@ class SoapyDevice:
         """Apply some settings to fix quirks of specific hardware"""
         if self.hardware == 'LimeSDR-USB':
             logger.debug('Applying fixes for LimeSDR-USB quirks...')
-            # LimeSDR driver doesn't provide list of allowed sample rates and bandwidths
+            # LimeSDR driver doesn't provide useful list of allowed sample rates
             self.force_sample_rate = True
-            self.force_bandwidth = True
 
     @property
     def hardware(self):
