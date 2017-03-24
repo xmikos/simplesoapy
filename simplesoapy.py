@@ -44,14 +44,15 @@ class SoapyDevice:
     default_buffer_size = 8192
 
     def __init__(self, soapy_args='', sample_rate=0, bandwidth=0, corr=0, gain=0, auto_gain=False,
-                 channel=0, antenna='', settings=None, force_sample_rate=False, force_bandwidth=False):
+                 channel=0, antenna='', settings=None, force_sample_rate=False, force_bandwidth=False,
+                 buffer_size=0, stream_args=None):
         self.device = SoapySDR.Device(soapy_args)
         self.buffer = None
-        self.buffer_size = None
+        self.buffer_size = buffer_size
         self.buffer_overflow_count = 0
         self.stream = None
-        self.stream_args = None
-        self.stream_timeout = None
+        self.stream_args = stream_args
+        self.stream_timeout = 0
 
         self._hardware = self.device.getHardwareKey()
         self._channel = None
@@ -296,6 +297,14 @@ class SoapyDevice:
         }
         return settings
 
+    def list_stream_args(self):
+        """List available stream arguments, their default values and description"""
+        args = {
+            a.key: {'value': a.value, 'name': a.name, 'description': a.description}
+            for a in self.device.getStreamArgsInfo(SoapySDR.SOAPY_SDR_RX, self._channel)
+        }
+        return args
+
     def get_gain(self, amp_name):
         """Get gain of given amplification element"""
         if amp_name not in self.list_gains():
@@ -332,17 +341,14 @@ class SoapyDevice:
             raise ValueError('Unknown device setting!')
         self.device.writeSetting(setting_name, value)
 
-    def start_stream(self, buffer_size=0, stream_args=None):
+    def start_stream(self, buffer_size=0, stream_args=None, stream_timeout=0):
         """Start streaming samples"""
         if self.is_streaming:
             raise RuntimeError('Streaming has been already initialized!')
 
-        if stream_args or self.stream_args:
-            logger.debug('SoapySDR stream - args: {}'.format(stream_args or self.stream_args))
-            self.stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel],
-                                                  stream_args or self.stream_args)
-        else:
-            self.stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel])
+        logger.debug('SoapySDR stream - args: {}'.format(stream_args or self.stream_args or {}))
+        self.stream = self.device.setupStream(SoapySDR.SOAPY_SDR_RX, SoapySDR.SOAPY_SDR_CF32, [self._channel],
+                                              stream_args or self.stream_args or {})
         self.device.activateStream(self.stream)
 
         buffer_size = buffer_size or self.buffer_size
@@ -357,7 +363,7 @@ class SoapyDevice:
 
         self.buffer = numpy.empty(buffer_size, numpy.complex64)
         self.buffer_overflow_count = 0
-        self.stream_timeout = 0.1 + (buffer_size / self.sample_rate)
+        self.stream_timeout = stream_timeout or 0.1 + (buffer_size / self.sample_rate)
         logger.debug('SoapySDR stream - buffer size: {}'.format(buffer_size))
         logger.debug('SoapySDR stream - read timeout: {:.6f}'.format(self.stream_timeout))
 
@@ -379,11 +385,8 @@ class SoapyDevice:
             raise RuntimeError('Streaming is not initialized, you must run start_stream() first!')
 
         buffer_size = len(self.buffer)
-        if stream_timeout or self.stream_timeout:
-            res = self.device.readStream(self.stream, [self.buffer], buffer_size,
-                                         timeoutUs=math.ceil((stream_timeout or self.stream_timeout) * 1e6))
-        else:
-            res = self.device.readStream(self.stream, [self.buffer], buffer_size)
+        res = self.device.readStream(self.stream, [self.buffer], buffer_size,
+                                     timeoutUs=math.ceil((stream_timeout or self.stream_timeout) * 1e6))
         if res.ret > 0 and res.ret < buffer_size:
             logger.warning('readStream returned only {} samples, but buffer size is {}!'.format(
                 res.ret, buffer_size
