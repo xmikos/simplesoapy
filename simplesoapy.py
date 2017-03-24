@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import sys, math, logging, collections, itertools
+import sys, math, logging, collections, collections.abc, itertools
 
 import SoapySDR
 import numpy
 
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 logger = logging.getLogger(__name__)
 
 
