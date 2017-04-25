@@ -34,7 +34,8 @@ def detect_devices(soapy_args='', as_string=False):
                 d_str.append('device_id={}'.format(d['device_id']))
             if 'rtl' in d:
                 d_str.append('rtl={}'.format(d['rtl']))
-            d_str.append('label={}'.format(d['label']))
+            if 'label' in d:
+                d_str.append('label={}'.format(d['label']))
             devices_str.append(', '.join(d_str))
         return devices_str
 
