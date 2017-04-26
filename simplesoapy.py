@@ -183,7 +183,8 @@ class SoapyDevice:
         if self.force_sample_rate:
             real_sample_rate = sample_rate
         else:
-            real_sample_rate = closest(self.list_sample_rates(), sample_rate)
+            rate_ranges = self.list_sample_rates()
+            real_sample_rate = rate_ranges.closest(sample_rate)
             if sample_rate != real_sample_rate:
                 logger.warning('Sample rate {} Hz is not supported, setting it to {} Hz!'.format(
                     sample_rate, real_sample_rate
@@ -299,14 +300,30 @@ class SoapyDevice:
 
     def list_sample_rates(self):
         """List allowed sample rates"""
-        return self.device.listSampleRates(SoapySDR.SOAPY_SDR_RX, self._channel)
+        try:
+            rate_ranges = Ranges(
+                (f.minimum(), f.maximum())
+                for f in self.device.getSampleRateRange(SoapySDR.SOAPY_SDR_RX, self._channel)
+            )
+        except AttributeError:
+            rate_ranges = None
+
+        if rate_ranges:
+            return rate_ranges
+        else:
+            rate_list = self.device.listSampleRates(SoapySDR.SOAPY_SDR_RX, self._channel)
+            return Ranges((f, f) for f in rate_list)
 
     def list_bandwidths(self):
         """List allowed bandwidths"""
-        band_ranges = Ranges(
-            (f.minimum(), f.maximum())
-            for f in self.device.getBandwidthRange(SoapySDR.SOAPY_SDR_RX, self._channel)
-        )
+        try:
+            band_ranges = Ranges(
+                (f.minimum(), f.maximum())
+                for f in self.device.getBandwidthRange(SoapySDR.SOAPY_SDR_RX, self._channel)
+            )
+        except AttributeError:
+            band_ranges = None
+
         if band_ranges:
             return band_ranges
         else:
