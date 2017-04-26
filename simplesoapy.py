@@ -158,7 +158,7 @@ class SoapyDevice:
     @property
     def freq(self):
         """Center frequency [Hz]"""
-        return self.device.getFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')
+        return self.device.getFrequency(SoapySDR.SOAPY_SDR_RX, self._channel)
 
     @freq.setter
     def freq(self, freq):
@@ -170,7 +170,7 @@ class SoapyDevice:
             ))
 
         self._freq = freq
-        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF', freq)
+        self.device.setFrequency(SoapySDR.SOAPY_SDR_RX, self._channel, freq)
 
     @property
     def sample_rate(self):
@@ -399,7 +399,7 @@ class SoapyDevice:
                 raise ValueError('Unknown tunable element!')
             freq = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, tunable_name)[0]
         else:
-            freq = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel, 'RF')[0]
+            freq = self.device.getFrequencyRange(SoapySDR.SOAPY_SDR_RX, self._channel)[0]
         return (freq.minimum(), freq.maximum())
 
     def get_setting(self, setting_name):
