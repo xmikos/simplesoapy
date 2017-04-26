@@ -4,16 +4,16 @@ from setuptools import setup
 
 setup(
     name="SimpleSoapy",
-    version="1.4.1",
+    version="1.5.0",
     description="Simple pythonic wrapper for SoapySDR library",
-    long_description=open('README.rst').read(),
+    long_description=open("README.rst").read(),
     author="Michal Krenek (Mikos)",
     author_email="m.krenek@gmail.com",
     url="https://github.com/xmikos/simplesoapy",
     license="MIT",
     py_modules=["simplesoapy"],
     install_requires=[
-        'numpy',
+        "numpy",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

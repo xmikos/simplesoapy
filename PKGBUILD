@@ -1,7 +1,7 @@
 # Maintainer: Michal Krenek (Mikos) <m.krenek@gmail.com>
 pkgname=simplesoapy
 _pkgname=simplesoapy
-pkgver=1.4.1
+pkgver=1.5.0
 pkgrel=1
 pkgdesc="Simple pythonic wrapper for SoapySDR library"
 arch=('any')
