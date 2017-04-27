@@ -72,7 +72,7 @@ class SoapyDevice:
     """Simple wrapper for SoapySDR"""
     default_buffer_size = 8192
 
-    def __init__(self, soapy_args='', sample_rate=0, bandwidth=0, corr=0, gain=0, auto_gain=False,
+    def __init__(self, soapy_args='', sample_rate=0, bandwidth=0, corr=0, gain=None, auto_gain=False,
                  channel=0, antenna='', settings=None, force_sample_rate=False, force_bandwidth=False,
                  buffer_size=0, stream_args=None):
         self.device = SoapySDR.Device(soapy_args)
@@ -111,7 +111,7 @@ class SoapyDevice:
         if gain and isinstance(gain, dict):
             for amp_name, value in gain.items():
                 self.set_gain(amp_name, value)
-        elif gain:
+        elif gain is not None:
             self.gain = gain
 
         if auto_gain:
