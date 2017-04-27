@@ -5,7 +5,7 @@ import sys, math, logging, collections, collections.abc, itertools
 import SoapySDR
 import numpy
 
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 logger = logging.getLogger(__name__)
 
 
